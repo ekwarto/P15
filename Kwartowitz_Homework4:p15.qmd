@@ -3,29 +3,62 @@ title: "Kwartowitz_Homework4/p15"
 author: "Ellie Kwartowitz"
 format: 
   html:
-editor: visual
     embed-resources: true
+editor: visual
 editor_options:
   chunk_output_type: console
 ---
 
-## Quarto
+1.  Saving to RDS
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+    ```{r}
+    #install.packages("RedditExtractoR")
+    library(RedditExtractoR)
+    library(tidyverse)
+    library(tidytext)
 
-## Running Code
+    #| eval: false
+    top_movies_urls <- find_thread_urls(subreddit="movies", sort_by="top")
+    write_rds(top_movies_urls, "top_movies_urls.rds")
+    ```
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+2.  Pull posts from a subreddit
 
-```{r}
-1 + 1
-```
+    ```{r}
+    top_movies_urls <- read_rds("top_movies_urls.rds")
+    str(top_movies_urls)
 
-You can add options to executable code like this
+    tidy_movies <- top_movies_urls %>%
+      unnest_tokens(word, text) %>%
+      anti_join(get_stopwords()) %>%
+      count(word, sort = TRUE)
+    ```
 
-```{r}
-#| echo: false
-2 * 2
-```
+3.  Pull data on a specific user
 
-The `echo: false` option disables the printing of code (only output is displayed).
+    ```{r}
+    user <- "thisisbillgates"
+    bill_gates_user <- get_user_content(user)
+    write_rds(bill_gates_user, "billgatesuser.rds")
+
+    bill_gates_user <- read_rds("billgatesuser.rds")
+    str(bill_gates_user)
+
+    str(bill_gates_user[[user]]$about)
+
+    str(bill_gates_user[[user]]$comments)
+
+    str(bill_gates_user[[user]]$threads)
+
+    basecomments <- bill_gates_user[[user]]$comments %>%
+      tibble() %>%
+      filter(score > 40)
+    basecomments
+
+    words <- basecomments %>%
+      unnest_tokens(word, comment) %>%
+      anti_join(stop_words)
+
+    word_counts <- words %>%
+      count(word, sort = TRUE)
+    ```
